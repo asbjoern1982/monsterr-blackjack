@@ -1,10 +1,11 @@
 import {sharedInterface as netframe} from '../../lib/netframe'
-import Deck from '../model/deck'
-import Hand from '../model/hand'
+import model from '../model/model'
 
-function createDeck (entityId, cards) {
+let networkIdentityColors = ['red', 'yellow', 'white']
+
+let createDeck = (entityId, cards) => {
   // Create the deck entity
-  let deck = new Deck(entityId, cards)
+  let deck = new model.Deck(entityId, cards)
 
   // Add entity to map
   netframe.updateEntity(deck.id, deck)
@@ -12,9 +13,9 @@ function createDeck (entityId, cards) {
   return deck
 }
 
-function createHand (entityId, owner) {
+let createHand = (entityId, owner) => {
   // Create the deck entity
-  let hand = new Hand(entityId, owner)
+  let hand = new model.Hand(entityId, owner)
 
   // Add entity to map
   netframe.updateEntity(hand.id, hand)
@@ -22,7 +23,19 @@ function createHand (entityId, owner) {
   return hand
 }
 
+let createCard = (entityId, type) => {
+  let card = new model.Card(entityId, type)
+  netframe.updateEntity(card.id, card)
+  return card
+}
+
+let getNetworkIdentityColors = () => {
+  return networkIdentityColors
+}
+
 export default {
   createDeck: createDeck,
-  createHand: createHand
+  createHand: createHand,
+  createCard: createCard,
+  getNetworkIdentityColors: getNetworkIdentityColors
 }

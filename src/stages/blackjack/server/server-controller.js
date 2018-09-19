@@ -1,4 +1,4 @@
-import Card from '../shared/model/card'
+import model from '../shared/model/model'
 import modelController from '../shared/controller/controller'
 import {serverSharedInterface as netframe} from '../lib/netframe'
 
@@ -17,7 +17,7 @@ let init = (serverInstance) => {
   netframe.startLoop(10) // start server update with X ms interval - stop again with stopLoop()
 
   // server generates deck on startup
-  deck = createDecks()
+  deck = createDecks(1)
 }
 
 // Gets called from netframe after each update
@@ -36,7 +36,7 @@ let clientConnected = (client, networkIdentity) => {
 }
 
 let createPlayer = (owner, name) => {
-  netframe.log('createPlayer() called on server.')
+  netframe.log('ash: server-controler>createPlayer')
   let entityId = netframe.createNewEntityId()
   modelController.createHand(entityId, owner)
 }
@@ -46,32 +46,42 @@ let createPlayer = (owner, name) => {
 // ---------------------------------------------------------------
 
 let createDecks = (numberOfSets) => {
+  netframe.log('ash: server-controler>createDecks')
   let cards = []
   let ranks = ['a', '2', '3', '4', '5', '6', '7', '8', '9', 't', 'j', 'q', 'k']
   let colors = ['c', 'd', 'h', 's']
-  for (let d = 0; d < this.numberOfSets; d++) {
+  for (let d = 0; d < numberOfSets; d++) {
     for (let r in ranks) {
       for (let c in colors) {
         let entityId = netframe.createNewEntityId()
-        cards.push(new Card(entityId, ranks[r] + colors[c]))
+        let card = modelController.createCard(entityId, ranks[r] + colors[c])
+        cards.push(card) // new model.Card(entityId, ranks[r] + colors[c]))
       }
     }
   }
 
-  let deck = modelController.createDeck(cards)
+  let entityId = netframe.createNewEntityId()
+  let deck = modelController.createDeck(entityId, cards)
   deck.shuffle()
+
   // TODO sync the clients?
   return deck
 }
 
-let cmdCardDelt = () => {
+let cmdOneMore = (entity) => {
+  netframe.log('ash: client wants one more card')
+}
 
+let cmdStop = (entity) => {
+  netframe.log('ash: client asked to stop')
+  entity.stop()
 }
 
 // ---------------------------------------------------------------
 
 const commands = {
-  'cmdCardDelt': cmdCardDelt
+  'cmdStop': cmdStop,
+  'cmdOneMore': cmdOneMore
 }
 
 const api = {

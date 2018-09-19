@@ -1,7 +1,7 @@
 import createServer, { Network } from 'monsterr'
-import stage1 from './src/stages/stage1/server/server'
+import blackjack from './src/stages/blackjack/server/server'
 
-const stages = [stage1]
+const stages = [blackjack]
 
 let events = {}
 let commands = {}
