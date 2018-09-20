@@ -1,5 +1,5 @@
-import model from '../shared/model/model'
 import modelController from '../shared/controller/controller'
+import model from '../shared/model/model'
 import {serverSharedInterface as netframe} from '../lib/netframe'
 
 let deck
@@ -36,7 +36,6 @@ let clientConnected = (client, networkIdentity) => {
 }
 
 let createPlayer = (owner, name) => {
-  netframe.log('ash: server-controler>createPlayer')
   let entityId = netframe.createNewEntityId()
   modelController.createHand(entityId, owner)
 }
@@ -46,7 +45,6 @@ let createPlayer = (owner, name) => {
 // ---------------------------------------------------------------
 
 let createDecks = (numberOfSets) => {
-  netframe.log('ash: server-controler>createDecks')
   let cards = []
   let ranks = ['a', '2', '3', '4', '5', '6', '7', '8', '9', 't', 'j', 'q', 'k']
   let colors = ['c', 'd', 'h', 's']
@@ -61,20 +59,57 @@ let createDecks = (numberOfSets) => {
   }
 
   let entityId = netframe.createNewEntityId()
-  let deck = modelController.createDeck(entityId, cards)
-  deck.shuffle()
-
-  // TODO sync the clients?
-  return deck
+  let newDeck = modelController.createDeck(entityId, cards)
+  newDeck.shuffle()
+  return newDeck
 }
 
-let cmdOneMore = (entity) => {
-  netframe.log('ash: client wants one more card')
+let cmdOneMore = (hand) => {
+  if (!hand.isStopped()) {
+    let card = deck.drawCard()
+    hand.addCard(card)
+    if (hand.getPoints() > 21) {
+      hand.stop()
+      let turnover = netframe.getEntitiesKeys()
+        .map(key => netframe.getEntity(key))
+        .filter(e => e instanceof model.Hand)
+        .reduce(hand => !hand.isStopped())
+      if (!turnover) {
+        dealersTurn()
+      }
+    }
+  }
 }
 
-let cmdStop = (entity) => {
-  netframe.log('ash: client asked to stop')
-  entity.stop()
+let cmdStop = (hand) => {
+  netframe.log('ash: client asked to stop, entity: ' + JSON.stringify(hand))
+  hand.stop()
+
+  let turnover = netframe.getEntitiesKeys()
+    .map(key => netframe.getEntity(key))
+    .filter(e => e instanceof model.Hand)
+    .reduce(hand => !hand.isStopped())
+  if (!turnover) {
+    dealersTurn()
+  }
+}
+
+let dealersTurn = () => {
+  let maxPoints = netframe.getEntitiesKeys()
+    .map(key => netframe.getEntity(key))
+    .filter(e => e instanceof model.Hand)
+    .filter(hand => hand.getPoints() <= 21)
+    .reduce((max, hand) => Math.max(max, hand.getPoints()))
+
+  while (deck.getPoints < maxPoints) {
+    deck.push(deck.drawCard())
+  }
+  // gameover
+  console.log('ash> max was: ' + maxPoints + ' and dealer drew: ' + deck.points)
+  if (deck.getPoints() > 21) {
+    // dealer lost, player with the highest points
+  }
+  setTimeout({/* reset game*/}, 2000)
 }
 
 // ---------------------------------------------------------------

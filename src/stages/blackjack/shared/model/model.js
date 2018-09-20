@@ -19,7 +19,7 @@ class Hand extends Entity {
   getPoints () {
     let points = 0
     for (let c in this.cards) {
-      points += this.cards[c].getRank()
+      points += Math.floor(this.cards[c].rank)
     }
     return points
   }
@@ -41,6 +41,7 @@ class Deck extends Entity {
   constructor (entityId, cards) {
     super(entityId, null)
     this.cards = cards
+    this.drawnCards = []
   }
 
   setCards (cards) {
@@ -49,6 +50,14 @@ class Deck extends Entity {
 
   getCount () {
     return this.cards.length
+  }
+
+  getPoints () {
+    let points = 0
+    for (let c in this.drawnCards) {
+      points += Math.floor(this.drawnCards[c].rank)
+    }
+    return points
   }
 
   shuffle () {
@@ -76,27 +85,27 @@ class Card extends Entity {
   constructor (entityId, type) {
     super(entityId, null)
     this.type = type
-  }
+    this.color = type.substring(1, 2)
 
-  getColor () {
-    return this.type.substring(1, 2)
-  }
-
-  getRank () {
     let rank = this.type.substring(0, 1)
     switch (rank) {
       case 'a':
-        return 1
+        this.rank = 1
+        break
       case 't':
-        return 10
+        this.rank = 10
+        break
       case 'j':
-        return 11
+        this.rank = 11
+        break
       case 'q':
-        return 12
+        this.rank = 12
+        break
       case 'k':
-        return 13
+        this.rank = 13
+        break
       default:
-        return rank
+        this.rank = rank
     }
   }
 }

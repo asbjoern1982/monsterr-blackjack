@@ -55,16 +55,17 @@ let addHand = (hand, name) => {
   })
 
   let cards = ''
-
   let points = 0
   for (let c in hand.cards) {
-    cards = '[' + hand.cards[c].getColor() + hand.cards[c].getRank() + ']'
-    points += hand.cards[c].getRank()
+    cards = '[' + hand.cards[c].color + hand.cards[c].rank + ']'
+    points += Math.floor(hand.cards[c].rank)
   }
 
   let handView = new fabric.Text('name: ' + name + '\ncards: ' + cards + '\ntotal: ' + points, {
-    left: padding + handViews.size * 120,
-    top: padding + 100,
+    left: padding + 2 + handViews.size * 120,
+    top: padding + 2 + 100,
+    width: 100 - 1,
+    height: 50 + 4,
     fontSize: 12,
     selectable: false
   })
@@ -73,16 +74,40 @@ let addHand = (hand, name) => {
 }
 
 let updateDeck = () => {
-  console.log('ash: view>updatedeck')
-  if (deck) deckView.setText(deck.getCount())
+  if (deck) {
+    let text = 'count: ' + deck.cards.length
+    let cards = ''
+    let points = 0
+    for (let c in deck.drawnCards) {
+      cards += '[' + deck.drawnCards[c].color + deck.drawnCards[c].rank + ']'
+      points += Math.floor(deck.drawnCards[c].rank)
+    }
+    if (points > 0) {
+      text += '\ncards: ' + cards + '\ntotal: ' + points
+    }
+    deckView.text = text
+  }
   netframe.getClient().getCanvas().renderAll()
 }
 
 let updatehand = (hand) => {
-  console.log('ash: view>updatehand ' + hand)
-  if (handViews.get(hand.id)) {
-    handViews.get(hand.id).setText(hand.getPoints())
+  if (handViews.get(hand.id)) { // FIXME defensive
+    let cards = ''
+    let points = 0
+    for (let c in hand.cards) {
+      cards += '[' + hand.cards[c].color + hand.cards[c].rank + ']'
+      points += Math.floor(hand.cards[c].rank)
+    }
+    let text = 'name: ' + hand.owner + '\ncards: ' + cards + '\ntotal: ' + points
+    handViews.get(hand.id).text = text
+
+    if (hand.stopped) {
+      // only the text area though
+      console.log('stopped!! setting background color')
+      handViews.get(hand.id).set('backgroundColor', 'yellow')
+    }
   }
+
   netframe.getClient().getCanvas().renderAll()
 }
 

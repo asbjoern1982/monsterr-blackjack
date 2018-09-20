@@ -70,7 +70,7 @@ let oneMoreListener = () => {
     let hand = netframe.getEntity(controlledEntity)
     if (hand.getPoints() < 21) {
       // TODO ask the server to get one more card
-      let data = {command: 'oneMore', entityId: controlledEntity, params: []}
+      let data = {command: 'cmdOneMore', entityId: controlledEntity, params: []}
       netframe.makeCmd(data)
     }
   }
