@@ -3,7 +3,9 @@ import view from './view'
 import {clientSharedInterface as netframe} from '../lib/netframe'
 
 const rpcs = {
-
+  chatRPC (message) {
+    netframe.getClient().getChat().append(message)
+  }
 }
 
 let controlledEntity
@@ -54,7 +56,7 @@ let createEntity = (entity) => {
 
 function updateEntity (entity) {
   if (entity instanceof model.Deck) {
-    view.updateDeck()
+    view.updateDeck(entity)
   } else if (entity instanceof model.Hand) {
     view.updatehand(entity)
   }

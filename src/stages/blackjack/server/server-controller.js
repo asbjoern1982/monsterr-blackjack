@@ -70,11 +70,7 @@ let cmdOneMore = (hand) => {
     hand.addCard(card)
     if (hand.getPoints() > 21) {
       hand.stop()
-      let turnover = netframe.getEntitiesKeys()
-        .map(key => netframe.getEntity(key))
-        .filter(e => e instanceof model.Hand)
-        .reduce(hand => !hand.isStopped())
-      if (!turnover) {
+      if (isTurnOver) {
         dealersTurn()
       }
     }
@@ -85,31 +81,53 @@ let cmdStop = (hand) => {
   netframe.log('ash: client asked to stop, entity: ' + JSON.stringify(hand))
   hand.stop()
 
-  let turnover = netframe.getEntitiesKeys()
-    .map(key => netframe.getEntity(key))
-    .filter(e => e instanceof model.Hand)
-    .reduce(hand => !hand.isStopped())
-  if (!turnover) {
+  if (isTurnOver()) {
     dealersTurn()
   }
 }
 
+let isTurnOver = () => {
+  let turnover = netframe.getEntitiesKeys()
+    .map(key => netframe.getEntity(key))
+    .filter(e => e instanceof model.Hand)
+    .filter(hand => !hand.stopped)
+  console.log('ash> turnover: ' + JSON.stringify(turnover))
+  return turnover.length === 0
+}
+
 let dealersTurn = () => {
+  netframe.log('ash: dealers turn now!!')
   let maxPoints = netframe.getEntitiesKeys()
     .map(key => netframe.getEntity(key))
     .filter(e => e instanceof model.Hand)
     .filter(hand => hand.getPoints() <= 21)
-    .reduce((max, hand) => Math.max(max, hand.getPoints()))
+    .reduce((max, hand) => Math.max(max, hand.getPoints()), 0)
 
-  while (deck.getPoints < maxPoints) {
-    deck.push(deck.drawCard())
+  while (deck.getPoints() < maxPoints) {
+    deck.drawnCards.push(deck.drawCard())
   }
   // gameover
-  console.log('ash> max was: ' + maxPoints + ' and dealer drew: ' + deck.points)
+  console.log('ash> max was: ' + maxPoints + ' and dealer drew: ' + deck.getPoints())
   if (deck.getPoints() > 21) {
-    // dealer lost, player with the highest points
+    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: players won'])
+    console.log('ash> GAMEOVER: players won')
+  } else {
+    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: dealer won'])
+    console.log('ash> GAMEOVER: dealer won')
   }
-  setTimeout({/* reset game*/}, 2000)
+  setTimeout(() => {
+    console.log('ash> reset game')
+    /* let count = deck.drawnCards.length
+    for (let i = 0; i < count; i++) deck.cards.push(deck.drawnCards.pop())
+    netframe.getEntitiesKeys()
+      .map(key => netframe.getEntity(key))
+      .filter(e => e instanceof model.Hand)
+      .forEach((hand) => {
+        let count = hand.cards.length
+        for (let i = 0; i < count; i++) deck.cards.push(hand.cards.pop())
+        hand.stopped = false
+      }) */
+  }, 2500)
 }
 
 // ---------------------------------------------------------------
