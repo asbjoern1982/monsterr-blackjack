@@ -97,27 +97,37 @@ let isTurnOver = () => {
 
 let dealersTurn = () => {
   netframe.log('ash: dealers turn now!!')
-  let maxPoints = netframe.getEntitiesKeys()
+  let handWithMaxPoints
+  netframe.getEntitiesKeys()
     .map(key => netframe.getEntity(key))
     .filter(e => e instanceof model.Hand)
     .filter(hand => hand.getPoints() <= 21)
-    .reduce((max, hand) => Math.max(max, hand.getPoints()), 0)
+    .reduce((max, hand) => {
+      return (max)
+        ? (max.getPoints() > hand.getPoints() ? max : hand)
+        : hand
+    }, undefined)
 
-  while (deck.getPoints() < maxPoints) {
-    deck.drawnCards.push(deck.drawCard())
+  if (handWithMaxPoints) {
+    while (deck.getPoints() < handWithMaxPoints.getPoints()) {
+      deck.drawnCards.push(deck.drawCard())
+    }
   }
   // gameover
-  console.log('ash> max was: ' + maxPoints + ' and dealer drew: ' + deck.getPoints())
-  if (deck.getPoints() > 21) {
-    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: players won'])
-    console.log('ash> GAMEOVER: players won')
+  if (handWithMaxPoints && deck.getPoints() > 21) {
+    let winners = netframe.getEntitiesKeys()
+      .map(key => netframe.getEntity(key))
+      .filter(e => e instanceof model.Hand)
+      .filter(hand => hand.getPoints() === handWithMaxPoints.getPoints())
+      .map(hand => hand.owner)
+      .join(', ')
+    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: [' + winners + '] won'])
   } else {
     netframe.makeRPC('chatRPC', ['ash> GAMEOVER: dealer won'])
-    console.log('ash> GAMEOVER: dealer won')
   }
   setTimeout(() => {
     console.log('ash> reset game')
-    /* let count = deck.drawnCards.length
+    let count = deck.drawnCards.length
     for (let i = 0; i < count; i++) deck.cards.push(deck.drawnCards.pop())
     netframe.getEntitiesKeys()
       .map(key => netframe.getEntity(key))
@@ -126,8 +136,9 @@ let dealersTurn = () => {
         let count = hand.cards.length
         for (let i = 0; i < count; i++) deck.cards.push(hand.cards.pop())
         hand.stopped = false
-      }) */
-  }, 2500)
+      })
+    deck.shuffle()
+  }, 5000)
 }
 
 // ---------------------------------------------------------------
