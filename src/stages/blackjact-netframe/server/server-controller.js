@@ -97,48 +97,52 @@ let isTurnOver = () => {
 
 let dealersTurn = () => {
   netframe.log('ash: dealers turn now!!')
-  let handWithMaxPoints
-  netframe.getEntitiesKeys()
+
+  let winners = netframe.getEntitiesKeys()
     .map(key => netframe.getEntity(key))
     .filter(e => e instanceof model.Hand)
     .filter(hand => hand.getPoints() <= 21)
-    .reduce((max, hand) => {
-      return (max)
-        ? (max.getPoints() > hand.getPoints() ? max : hand)
-        : hand
-    }, undefined)
+    .reduce((acc, hand) => {
+      return (acc.length === 0 || acc[0].getPoints() < hand.getPoints())
+        ? [hand] : (acc[0].getPoints() === hand.getPoints()) ? acc.push(hand) : acc
+    }, [])
 
-  if (handWithMaxPoints) {
-    while (deck.getPoints() < handWithMaxPoints.getPoints()) {
+  if (winners.length > 0) {
+    while (deck.getPoints() < winners[0].getPoints()) {
       deck.drawnCards.push(deck.drawCard())
     }
   }
-  // gameover
-  if (handWithMaxPoints && deck.getPoints() > 21) {
-    let winners = netframe.getEntitiesKeys()
-      .map(key => netframe.getEntity(key))
-      .filter(e => e instanceof model.Hand)
-      .filter(hand => hand.getPoints() === handWithMaxPoints.getPoints())
-      .map(hand => hand.owner)
-      .join(', ')
-    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: [' + winners + '] won'])
+
+  if (winners.length > 0 && deck.getPoints() > 21) {
+    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: [' + winners.map(hand => hand.owner).join(', ') + '] won with ' + winners[0].getPoints() + ' points'])
   } else {
-    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: dealer won'])
+    netframe.makeRPC('chatRPC', ['ash> GAMEOVER: dealer won with ' + deck.getPoints() + ' points'])
   }
+
   setTimeout(() => {
     console.log('ash> reset game')
-    let count = deck.drawnCards.length
-    for (let i = 0; i < count; i++) deck.cards.push(deck.drawnCards.pop())
-    netframe.getEntitiesKeys()
-      .map(key => netframe.getEntity(key))
-      .filter(e => e instanceof model.Hand)
-      .forEach((hand) => {
-        let count = hand.cards.length
-        for (let i = 0; i < count; i++) deck.cards.push(hand.cards.pop())
-        hand.stopped = false
-      })
-    deck.shuffle()
+    resetGame()
   }, 5000)
+}
+
+let resetGame = () => {
+  // deck.cards.push(...deck.drawCards)
+  deck.drawnCards.length = []
+  // while (deck.drawnCards.length > 0) deck.cards.push(deck.drawnCards.pop())
+  // let count = deck.drawnCards.length
+  // for (let i = 0; i < count; i++) deck.cards.push(deck.drawnCards.pop())
+  netframe.getEntitiesKeys()
+    .map(key => netframe.getEntity(key))
+    .filter(e => e instanceof model.Hand)
+    .forEach((hand) => {
+      // deck.cards.push(...hand.cards)
+      hand.cards = []
+      // while (hand.cards.length > 0) deck.cards.push(hand.cards.pop())
+      // let count = hand.cards.length
+      // for (let i = 0; i < count; i++) deck.cards.push(hand.cards.pop())
+      hand.stopped = false
+    })
+  deck.shuffle()
 }
 
 // ---------------------------------------------------------------

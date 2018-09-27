@@ -1,25 +1,42 @@
-import clientController, {listeners} from './client-controller'
-import {getCombinedClientEvents} from '../lib/netframe'
-
-// You can import html and css from anywhere.
+import view from './view'
 import html from './client.html'
-// css is immediately applied on import.
 import './client.css'
+
+let commands = {}
+let events = {
+  'gamestate': (client, gamestate) => {
+    view.initBoard(client.getCanvas(), gamestate.players, gamestate.deckCount)
+  },
+  'drew': (client, payload) => {
+    client.getChat().append(payload.clientId + ' drew ' + payload.card.color + payload.card.rank)
+  },
+  'stod': (client, clientId) => {
+    client.getChat().append(clientId + ' stands')
+  },
+  'gameover': (client, message) => {
+    client.getChat().append(message)
+  },
+  'playerJoined': (client, payload) => {
+
+  }
+}
 
 export default {
   html,
-  commands: {
-    finish (client) {
-      client.stageFinished() // <== this is how a client reports finished
-      return false // <== false tells client not to pass command on to server
-    }
-  },
-  events: getCombinedClientEvents(),
+  commands: commands,
+  events: events,
   setup: (client) => {
-    clientController.init(client)
-
-    $('#client-one-more').on('click', listeners['oneMoreListener'])
-    $('#client-stop').on('click', listeners['stopListener'])
+    $('#client-hit').on('click', () => {
+      client.send('hit')
+    })
+    $('#client-stand').on('click', () => {
+      client.send('stand')
+    })
+    window.addEventListener('resize', () => {
+      client.getCanvas().clear()
+      view.initBoard(client.getCanvas())
+    })
+    client.send('ready')
   },
   teardown (client) {},
 

@@ -44,10 +44,6 @@ class Deck extends Entity {
     this.drawnCards = []
   }
 
-  setCards (cards) {
-    this.cards = cards
-  }
-
   getCount () {
     return this.cards.length
   }

@@ -35,4 +35,4 @@ $('#admin-button-reset').mouseup(e => {
   admin.sendCommand('reset')
 })
 
-admin.sendCommand('start')
+// admin.sendCommand('start')
